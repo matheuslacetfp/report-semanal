@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="theme-color" content="#120d24" />
+	<title>Fluxo de entrega | Operação de conteúdo</title>
+	<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+	<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+	<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+		:root { --bg: #100b1c; --panel: #1a1428; --panel-soft: #211933; --line: #35284d; --text: #f7f4ff; --muted: #a9a0ba; --purple: #9b7cf4; --purple-2: #704dcc; --green: #4fd18b; --blue: #70a8ff; --yellow: #f9cf52; }
+		* { box-sizing: border-box; }
+		body { margin: 0; color: var(--text); background: var(--bg); font-family: 'DM Sans', sans-serif; background-image: radial-gradient(circle at 80% 0%, rgba(112, 77, 204, .25), transparent 32rem), linear-gradient(125deg, #100b1c 0%, #171026 54%, #0d0a17 100%); min-height: 100vh; }
+		button { font: inherit; }
+		.shell { width: min(1180px, calc(100% - 40px)); margin: auto; padding: 34px 0 54px; }
+		.topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 46px; }
+		.brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: -.02em; }
+		.brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: linear-gradient(135deg, #b298ff, #6944c4); box-shadow: 0 8px 24px rgba(112, 77, 204, .35); color: #fff; font-weight: 700; }
+		.eyebrow { margin: 0 0 10px; color: var(--purple); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+		h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; margin: 0; letter-spacing: -.04em; }
+		h1 { max-width: 680px; font-size: clamp(2.2rem, 5vw, 4.5rem); line-height: .98; }
+		.hero { display: grid; grid-template-columns: 1.25fr .75fr; gap: 34px; align-items: end; margin-bottom: 34px; }
+		.hero-copy { color: var(--muted); max-width: 590px; font-size: 16px; line-height: 1.6; margin: 19px 0 0; }
+		.hero-side { background: rgba(26, 20, 40, .76); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: 0 22px 50px rgba(0,0,0,.18); }
+		.hero-side-head, .progress-meta { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+		.hero-side-head { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+		.hero-side strong { font-size: 34px; font-family: 'Space Grotesk'; }
+		.progress-track { height: 9px; border-radius: 99px; background: #332746; overflow: hidden; }
+		.progress-fill { height: 100%; width: 42%; border-radius: inherit; background: linear-gradient(90deg, var(--purple-2), #bda9ff); }
+		.progress-meta { color: var(--muted); font-size: 12px; margin-top: 10px; }
+		.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 38px; }
+		.kpi { padding: 18px 20px; background: rgba(26, 20, 40, .72); border: 1px solid var(--line); border-radius: 14px; }
+		.kpi-label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+		.kpi-value { font: 600 30px 'Space Grotesk'; }
+		.kpi-note { color: var(--purple); font-size: 12px; margin-left: 7px; }
+		.section-heading { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 16px; }
+		.section-heading h2 { font-size: 22px; }
+		.section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+		.filters { display: flex; gap: 7px; flex-wrap: wrap; }
+		.filter { border: 1px solid var(--line); border-radius: 99px; color: var(--muted); background: transparent; padding: 8px 13px; cursor: pointer; font-size: 12px; transition: .2s ease; }
+		.filter:hover, .filter.active { color: #fff; border-color: var(--purple); background: rgba(155, 124, 244, .14); }
+		.stages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin-bottom: 40px; }
+		.stage { background: rgba(26, 20, 40, .8); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+		.stage-bar { height: 5px; }
+		.stage-body { padding: 19px 20px 17px; }
+		.stage-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 5px; }
+		.stage-title h3 { font-size: 19px; }
+		.count { color: var(--muted); font-size: 12px; }
+		.stage-body > p { color: var(--muted); margin: 0 0 17px; font-size: 12px; }
+		.task { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-top: 1px solid rgba(53, 40, 77, .66); color: #ded8e9; font-size: 13px; line-height: 1.4; }
+		.task:first-of-type { border-top: 0; }
+		.task-dot { flex: 0 0 7px; width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: var(--purple); }
+		.task-card { position: relative; display: flex; flex-direction: column; gap: 9px; width: 100%; }
+		.task[draggable="true"] { cursor: grab; }
+		.task.dragging { opacity: .42; }
+		.stage.drop-target { border-color: var(--purple); box-shadow: 0 0 0 2px rgba(155, 124, 244, .2), 0 18px 42px rgba(112, 77, 204, .18); }
+		.stage.drop-target .stage-body { background: rgba(155, 124, 244, .06); }
+		.task-actions { display: flex; align-items: center; gap: 5px; margin-left: auto; opacity: 0; transition: opacity .2s ease; }
+		.task:hover .task-actions, .task:focus-within .task-actions { opacity: 1; }
+		.task-action, .add-task { border: 0; color: var(--muted); background: transparent; cursor: pointer; font-size: 11px; padding: 3px 5px; border-radius: 5px; }
+		.task-action:hover { color: #fff; background: rgba(155, 124, 244, .18); }
+		.task-edit { display: flex; gap: 7px; align-items: center; }
+		.task-input, .add-input { min-width: 0; width: 100%; border: 1px solid var(--purple); outline: 0; border-radius: 7px; color: var(--text); background: #110d1d; padding: 8px 9px; font: inherit; font-size: 13px; }
+		.task-select { border: 1px solid var(--line); border-radius: 6px; color: var(--muted); background: #110d1d; padding: 5px 6px; font-size: 11px; }
+		.add-task { display: flex; align-items: center; gap: 5px; color: var(--purple); margin-top: 12px; padding: 7px 0 0; }
+		.add-task:hover { color: #fff; }
+		.add-form { display: flex; gap: 6px; margin-top: 12px; }
+		.add-form .task-action { flex: 0 0 auto; border: 1px solid var(--purple); color: #fff; background: rgba(155, 124, 244, .14); padding: 6px 8px; }
+		.empty-stage { color: var(--muted); font-size: 12px; padding: 10px 0; }
+		.stage.todo .task-dot { background: var(--blue); }
+		.stage.done .task-dot { background: var(--green); }
+		.stage.next .task-dot { background: var(--yellow); }
+		.highlight { background: rgba(249, 207, 82, .12); color: #ffe994; border-radius: 7px; padding: 8px 9px; margin: 5px -9px -1px; }
+		.highlight .task-dot { background: var(--yellow); }
+		.details { display: grid; grid-template-columns: 1.05fr .95fr; gap: 14px; }
+		.panel { background: rgba(26, 20, 40, .8); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+		.panel h3 { font-size: 18px; margin-bottom: 18px; }
+		.panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+		.panel-header h3 { margin-bottom: 4px; }
+		.panel-header p { color: var(--muted); font-size: 11px; margin: 0; }
+		.panel-summary { color: var(--purple); font: 600 18px 'Space Grotesk'; white-space: nowrap; }
+		.metric-list { display: grid; gap: 15px; }
+		.metric-row { position: relative; padding: 13px 14px 14px; margin: 0; border: 1px solid rgba(53, 40, 77, .8); border-radius: 11px; background: rgba(33, 25, 51, .52); }
+		.metric-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #e9e4f1; font-size: 13px; margin-bottom: 6px; }
+		.metric-name { display: flex; align-items: center; gap: 8px; }
+		.metric-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--purple); }
+		.metric-status { color: var(--muted); font-size: 11px; }
+		.metric-value { color: #fff; font-size: 12px; font-weight: 600; }
+		.metric-row .progress-fill { width: 100%; background: linear-gradient(90deg, #704dcc, #bda9ff); }
+		.metric-row:nth-of-type(1) .progress-fill { width: 100%; background: linear-gradient(90deg, #3eae71, #7ce5ab); }
+		.metric-row:nth-of-type(2) .progress-fill { width: 67%; background: linear-gradient(90deg, #4c7fda, #8bbaff); }
+		.metric-row:nth-of-type(3) .progress-fill { width: 33%; background: linear-gradient(90deg, #704dcc, #bda9ff); }
+		.metric-row::after { display: block; margin-top: 7px; color: var(--muted); font-size: 11px; }
+		.metric-row:nth-of-type(1)::after { content: 'Estruturada'; color: var(--green); }
+		.metric-row:nth-of-type(2)::after { content: 'Em desenvolvimento'; color: var(--blue); }
+		.metric-row:nth-of-type(3)::after { content: 'Próxima prioridade'; color: var(--purple); }
+		.update { display: flex; gap: 13px; padding: 11px 0; border-top: 1px solid rgba(53, 40, 77, .66); }
+		.update:first-of-type { border-top: 0; padding-top: 0; }
+		.update-icon { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #c8baff; background: rgba(155, 124, 244, .16); font-size: 13px; }
+		.update b { display: block; color: #eeeaf7; font-size: 13px; font-weight: 600; }
+		.update small { color: var(--muted); display: block; font-size: 11px; margin-top: 3px; }
+		.footer { color: #776c89; font-size: 12px; text-align: center; margin-top: 42px; }
+		@media (max-width: 800px) { .shell { width: min(100% - 28px, 620px); padding-top: 22px; } .topbar { margin-bottom: 34px; } .hero, .details { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); } .stages { grid-template-columns: 1fr; } h1 { font-size: 3rem; } }
+		@media (max-width: 430px) { .kpis { gap: 8px; } .kpi { padding: 15px; } .kpi-value { font-size: 25px; } .section-heading { align-items: flex-start; flex-direction: column; } }
+	</style>
+</head>
+<body>
+	<div id="root"></div>
+	<script type="text/babel">
+		const { useEffect, useState } = React;
+		const initialStages = [
+			{ id: 'todo', name: 'A fazer', description: 'Próximas ações para destravar a operação', color: '#70a8ff', tasks: ['Validação de cadeia produtiva', 'Formatar saídas de formatos criativos', 'Acesso YouTube Analytics'] },
+			{ id: 'done', name: 'Feito', description: 'Entregas concluídas e em uso', color: '#4fd18b', tasks: ['Estudo e definição de abordagem', 'Criação de fluxo para mineração de conteúdo', 'Criação de fluxo de edição', 'Criação de script para transcrição', 'Alimentar planilha de garimpo (recorrente)'] },
+			{ id: 'next', name: 'Em seguida', description: 'Itens que entram no próximo ciclo', color: '#9b7cf4', tasks: ['Concepção e criação de planilha para acompanhamento', 'Refinar ingestão de dados a partir da validação de fluxo'] }
+		].map(stage => ({ ...stage, tasks: stage.tasks.map((title, index) => ({ id: stage.id + '-' + index, title })) }));
+		const initialActivity = [
+			{ id: 'activity-1', icon: '✓', title: 'Script de transcrição concluído', detail: 'Entrega registrada hoje' },
+			{ id: 'activity-2', icon: '↗', title: 'Planilha de acompanhamento priorizada', detail: 'Próximo ciclo de trabalho' },
+			{ id: 'activity-3', icon: '•', title: 'Validação da cadeia produtiva', detail: 'Aguardando início' }
+		];
+
+		function App() {
+			const [stages, setStages] = useState(() => { try { return JSON.parse(localStorage.getItem('fluxo-stages')) || initialStages; } catch (error) { return initialStages; } });
+			const [filter, setFilter] = useState('Todos');
+			const [editingId, setEditingId] = useState(null);
+			const [draft, setDraft] = useState('');
+			const [addingTo, setAddingTo] = useState(null);
+			const [newTitle, setNewTitle] = useState('');
+			const [draggedTaskId, setDraggedTaskId] = useState(null);
+			const [dropTargetId, setDropTargetId] = useState(null);
+			const [dropBeforeTaskId, setDropBeforeTaskId] = useState(null);
+			const [activity, setActivity] = useState(() => { try { return JSON.parse(localStorage.getItem('fluxo-activity')) || initialActivity; } catch (error) { return initialActivity; } });
+			const currentDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date());
+			useEffect(() => { localStorage.setItem('fluxo-stages', JSON.stringify(stages)); }, [stages]);
+			useEffect(() => { localStorage.setItem('fluxo-activity', JSON.stringify(activity)); }, [activity]);
+			const recordActivity = (title, icon, detail = 'Alteração registrada agora') => { const time = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date()); setActivity(current => [{ id: 'activity-' + Date.now(), icon, title, detail: detail === 'Alteração registrada agora' ? detail + ' · ' + time : detail }, ...current].slice(0, 6)); };
+			const visibleStages = filter === 'Todos' ? stages : stages.filter(stage => stage.name === filter);
+			const totalTasks = stages.reduce((total, stage) => total + stage.tasks.length, 0);
+			const doneTasks = stages.find(stage => stage.id === 'done').tasks.length;
+			const progress = totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0;
+			const startEditing = task => { setEditingId(task.id); setDraft(task.title); };
+			const saveTask = (taskId) => { if (!draft.trim()) return; const previousTask = stages.flatMap(stage => stage.tasks).find(task => task.id === taskId); setStages(current => current.map(stage => ({ ...stage, tasks: stage.tasks.map(task => task.id === taskId ? { ...task, title: draft.trim() } : task) }))); setEditingId(null); if (previousTask && previousTask.title !== draft.trim()) recordActivity('Atividade editada: ' + draft.trim(), '✎'); };
+			const deleteTask = taskId => { const deletedTask = stages.flatMap(stage => stage.tasks).find(task => task.id === taskId); setStages(current => current.map(stage => ({ ...stage, tasks: stage.tasks.filter(task => task.id !== taskId) }))); if (deletedTask) recordActivity('Atividade excluída: ' + deletedTask.title, '×'); };
+			const moveTask = (taskId, nextStageId, titleOverride, beforeTaskId = null) => { let movedTask; let previousStage; const withoutTask = stages.map(stage => ({ ...stage, tasks: stage.tasks.filter(task => { if (task.id === taskId) { movedTask = { ...task, ...(titleOverride && { title: titleOverride.trim() }) }; previousStage = stage; } return task.id !== taskId; }) })); if (!movedTask) return; setStages(withoutTask.map(stage => { if (stage.id !== nextStageId) return stage; const insertionIndex = beforeTaskId ? stage.tasks.findIndex(task => task.id === beforeTaskId) : -1; const tasks = [...stage.tasks]; tasks.splice(insertionIndex < 0 ? tasks.length : insertionIndex, 0, movedTask); return { ...stage, tasks }; })); setEditingId(null); const nextStage = stages.find(stage => stage.id === nextStageId); const changedColumn = previousStage && previousStage.id !== nextStageId; recordActivity(changedColumn ? movedTask.title + ' movida para ' + nextStage.name : movedTask.title + ' reordenada', changedColumn ? '↗' : '↕'); };
+			const handleDragStart = (event, taskId) => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', taskId); setDraggedTaskId(taskId); };
+			const handleDrop = (event, stageId, beforeTaskId = null) => { event.preventDefault(); event.stopPropagation(); const taskId = event.dataTransfer.getData('text/plain') || draggedTaskId; if (taskId) moveTask(taskId, stageId, null, beforeTaskId); setDraggedTaskId(null); setDropTargetId(null); setDropBeforeTaskId(null); };
+			const addTask = stageId => { if (!newTitle.trim()) return; setStages(current => current.map(stage => stage.id === stageId ? { ...stage, tasks: [...stage.tasks, { id: stageId + '-' + Date.now(), title: newTitle.trim() }] } : stage)); setNewTitle(''); setAddingTo(null); const targetStage = stages.find(stage => stage.id === stageId); recordActivity('Nova atividade: ' + newTitle.trim(), '+', targetStage ? targetStage.name : 'Atividade criada'); };
+			return <main className="shell">
+				<nav className="topbar"><div className="brand"><span className="brand-mark">↗</span><span>Geração de ADS</span></div><span className="eyebrow" style={{margin: 0}}>Visão geral · {currentDate}</span></nav>
+				<section className="hero"><div><p className="eyebrow">Fluxo de entrega</p><h1>Da ideia ao conteúdo que chega pronto.</h1><p className="hero-copy">Um mapa vivo das entregas de produção, com o que já foi construído, os próximos movimentos e os pontos que precisam de atenção.</p></div><div className="hero-side"><div className="hero-side-head"><span>Progresso do fluxo</span><span>{doneTasks} de {totalTasks} itens</span></div><strong>{progress}%</strong><div className="progress-track" style={{marginTop: 14}}><div className="progress-fill" style={{width: progress + '%'}}></div></div><div className="progress-meta"><span>Início da operação</span><span>Próximo ciclo</span></div></div></section>
+				<section className="kpis"><div className="kpi"><span className="kpi-label">Itens no fluxo</span><span className="kpi-value">{totalTasks}</span><span className="kpi-note">total</span></div><div className="kpi"><span className="kpi-label">Concluídos</span><span className="kpi-value">{doneTasks}</span><span className="kpi-note">{totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0}%</span></div><div className="kpi"><span className="kpi-label">Em andamento</span><span className="kpi-value">{stages.find(stage => stage.id === 'todo').tasks.length}</span><span className="kpi-note">prioridade</span></div><div className="kpi"><span className="kpi-label">Próximo passo</span><span className="kpi-value">{stages.find(stage => stage.id === 'next').tasks.length}</span><span className="kpi-note">entregas</span></div></section>
+				<section><div className="section-heading"><div><h2>Mapa de entregas</h2><p>Arraste, edite, mova e crie tarefas diretamente no quadro.</p></div><div className="filters">{['Todos', 'A fazer', 'Feito', 'Em seguida'].map(item => <button key={item} className={'filter ' + (filter === item ? 'active' : '')} onClick={() => setFilter(item)}>{item}</button>)}</div></div><div className="stages">{visibleStages.map(stage => <article className={'stage ' + stage.id + (dropTargetId === stage.id ? ' drop-target' : '')} key={stage.id} onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; setDropTargetId(stage.id); }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget)) setDropTargetId(null); }} onDrop={event => handleDrop(event, stage.id)}><div className="stage-bar" style={{background: stage.color}}></div><div className="stage-body"><div className="stage-title"><h3>{stage.name}</h3><span className="count">{stage.tasks.length} {stage.tasks.length === 1 ? 'item' : 'itens'}</span></div><p>{stage.description}</p>{stage.tasks.length === 0 && <div className="empty-stage">Nenhuma tarefa nesta coluna.</div>}{stage.tasks.map(task => <div className={'task ' + (task.title.includes('garimpo') ? 'highlight' : '') + (draggedTaskId === task.id ? ' dragging' : '')} key={task.id} draggable="true" onDragStart={event => handleDragStart(event, task.id)} onDragEnd={() => { setDraggedTaskId(null); setDropTargetId(null); setDropBeforeTaskId(null); }} onDragOver={event => { event.preventDefault(); event.stopPropagation(); setDropTargetId(stage.id); setDropBeforeTaskId(task.id); }} onDrop={event => handleDrop(event, stage.id, task.id)}><span className="task-dot"></span>{editingId === task.id ? <div className="task-card"><div className="task-edit"><input className="task-input" value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => event.key === 'Enter' && saveTask(task.id)} autoFocus /><button className="task-action" onClick={() => saveTask(task.id)}>Salvar</button></div><select className="task-select" value={stage.id} onChange={event => moveTask(task.id, event.target.value, draft)}>{stages.map(option => <option value={option.id} key={option.id}>{option.name}</option>)}</select></div> : <><span className="task-card">{task.title}</span><span className="task-actions"><button className="task-action" aria-label={'Editar ' + task.title} onClick={() => startEditing(task)}>Editar</button><button className="task-action" aria-label={'Excluir ' + task.title} onClick={() => deleteTask(task.id)}>Excluir</button></span></>}</div>)}{addingTo === stage.id ? <div className="add-form"><input className="add-input" placeholder="Nome da nova tarefa" value={newTitle} onChange={event => setNewTitle(event.target.value)} onKeyDown={event => event.key === 'Enter' && addTask(stage.id)} autoFocus /><button className="task-action" onClick={() => addTask(stage.id)}>Adicionar</button><button className="task-action" onClick={() => setAddingTo(null)}>Cancelar</button></div> : <button className="add-task" onClick={() => { setAddingTo(stage.id); setNewTitle(''); }}>＋ Adicionar tarefa</button>}</div></article>)}</div></section>
+				<section className="details"><div className="panel"><h3>Saúde do fluxo</h3><div className="metric-row"><div className="metric-label"><span>Base operacional</span><span>100%</span></div><div className="progress-track"><div className="progress-fill"></div></div></div><div className="metric-row"><div className="metric-label"><span>Automação e scripts</span><span>67%</span></div><div className="progress-track"><div className="progress-fill"></div></div></div><div className="metric-row"><div className="metric-label"><span>Dados e acompanhamento</span><span>33%</span></div><div className="progress-track"><div className="progress-fill"></div></div></div></div><div className="panel"><h3>Últimas movimentações</h3>{activity.map(item => <div className="update" key={item.id}><span className="update-icon">{item.icon}</span><div><b>{item.title}</b><small>{item.detail}</small></div></div>)}</div></section>
+				<p className="footer">Painel de acompanhamento da produção · histórico desta sessão</p>
+			</main>;
+		}
+		ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+	</script>
+</body>
+</html>
