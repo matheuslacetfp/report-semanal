@@ -10,9 +10,11 @@
 	<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 	<style>
 		@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
-		:root { --bg: #100b1c; --panel: #1a1428; --panel-soft: #211933; --line: #35284d; --text: #f7f4ff; --muted: #a9a0ba; --purple: #9b7cf4; --purple-2: #704dcc; --green: #4fd18b; --blue: #70a8ff; --yellow: #f9cf52; }
+		:root { --bg: #080611; --panel: #110c1c; --panel-soft: #181126; --line: #302143; --text: #f7f4ff; --muted: #b3a9c4; --purple: #9b7cf4; --purple-2: #704dcc; --green: #4fd18b; --blue: #70a8ff; --yellow: #f9cf52; }
 		* { box-sizing: border-box; }
-		body { margin: 0; color: var(--text); background: var(--bg); font-family: 'DM Sans', sans-serif; background-image: radial-gradient(circle at 80% 0%, rgba(112, 77, 204, .25), transparent 32rem), linear-gradient(125deg, #100b1c 0%, #171026 54%, #0d0a17 100%); min-height: 100vh; }
+		body { margin: 0; color: var(--text); background: var(--bg); font-family: 'DM Sans', sans-serif; background-image: radial-gradient(circle at 80% 0%, rgba(112, 77, 204, .13), transparent 32rem), linear-gradient(125deg, #080611 0%, #0e0918 54%, #05040b 100%); min-height: 100vh; }
+		#silk-background { position: fixed; inset: 0; width: 100%; height: 100%; opacity: .22; pointer-events: none; z-index: 0; }
+		#root { position: relative; z-index: 1; }
 		button { font: inherit; }
 		.shell { width: min(1180px, calc(100% - 40px)); margin: auto; padding: 34px 0 54px; }
 		.topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 46px; }
@@ -23,7 +25,9 @@
 		h1 { max-width: 680px; font-size: clamp(2.2rem, 5vw, 4.5rem); line-height: .98; }
 		.hero { display: grid; grid-template-columns: 1.25fr .75fr; gap: 34px; align-items: end; margin-bottom: 34px; }
 		.hero-copy { color: var(--muted); max-width: 590px; font-size: 16px; line-height: 1.6; margin: 19px 0 0; }
-		.hero-side { background: rgba(26, 20, 40, .76); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: 0 22px 50px rgba(0,0,0,.18); }
+		.hero-side, .kpi, .stage, .panel { position: relative; isolation: isolate; background: linear-gradient(145deg, rgba(18,12,30,.88), rgba(8,6,16,.76)); border: 1px solid rgba(255,255,255,.22); box-shadow: 0 22px 50px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(18px) saturate(135%); -webkit-backdrop-filter: blur(18px) saturate(135%); }
+		.hero-side::before, .kpi::before, .stage::before, .panel::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: radial-gradient(circle at 0% 0%, rgba(162,54,255,.22), transparent 42%), linear-gradient(120deg, rgba(255,255,255,.06), transparent 38%); pointer-events: none; }
+		.hero-side { border-radius: 18px; padding: 22px; }
 		.hero-side-head, .progress-meta { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
 		.hero-side-head { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
 		.hero-side strong { font-size: 34px; font-family: 'Space Grotesk'; }
@@ -31,7 +35,8 @@
 		.progress-fill { height: 100%; width: 42%; border-radius: inherit; background: linear-gradient(90deg, var(--purple-2), #bda9ff); }
 		.progress-meta { color: var(--muted); font-size: 12px; margin-top: 10px; }
 		.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 38px; }
-		.kpi { padding: 18px 20px; background: rgba(26, 20, 40, .72); border: 1px solid var(--line); border-radius: 14px; }
+		.kpi { padding: 18px 20px; border-radius: 14px; transition: transform .25s ease, border-color .25s ease, background .25s ease; }
+		.kpi:hover { transform: translateY(-3px); border-color: rgba(255,255,255,.4); background: linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.045)); }
 		.kpi-label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 12px; }
 		.kpi-value { font: 600 30px 'Space Grotesk'; }
 		.kpi-note { color: var(--purple); font-size: 12px; margin-left: 7px; }
@@ -42,7 +47,7 @@
 		.filter { border: 1px solid var(--line); border-radius: 99px; color: var(--muted); background: transparent; padding: 8px 13px; cursor: pointer; font-size: 12px; transition: .2s ease; }
 		.filter:hover, .filter.active { color: #fff; border-color: var(--purple); background: rgba(155, 124, 244, .14); }
 		.stages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin-bottom: 40px; }
-		.stage { background: rgba(26, 20, 40, .8); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+		.stage { border-radius: 16px; overflow: hidden; }
 		.stage-bar { height: 5px; }
 		.stage-body { padding: 19px 20px 17px; }
 		.stage-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 5px; }
@@ -75,14 +80,14 @@
 		.highlight { background: rgba(249, 207, 82, .12); color: #ffe994; border-radius: 7px; padding: 8px 9px; margin: 5px -9px -1px; }
 		.highlight .task-dot { background: var(--yellow); }
 		.details { display: grid; grid-template-columns: 1.05fr .95fr; gap: 14px; }
-		.panel { background: rgba(26, 20, 40, .8); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+		.panel { border-radius: 16px; padding: 22px; }
 		.panel h3 { font-size: 18px; margin-bottom: 18px; }
 		.panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 		.panel-header h3 { margin-bottom: 4px; }
 		.panel-header p { color: var(--muted); font-size: 11px; margin: 0; }
 		.panel-summary { color: var(--purple); font: 600 18px 'Space Grotesk'; white-space: nowrap; }
 		.metric-list { display: grid; gap: 15px; }
-		.metric-row { position: relative; padding: 13px 14px 14px; margin: 0; border: 1px solid rgba(53, 40, 77, .8); border-radius: 11px; background: rgba(33, 25, 51, .52); }
+		.metric-row { position: relative; padding: 13px 14px 14px; margin: 0; border: 1px solid rgba(255,255,255,.14); border-radius: 11px; background: rgba(7,5,14,.56); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 		.metric-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #e9e4f1; font-size: 13px; margin-bottom: 6px; }
 		.metric-name { display: flex; align-items: center; gap: 8px; }
 		.metric-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--purple); }
@@ -107,7 +112,33 @@
 	</style>
 </head>
 <body>
+	<canvas id="silk-background" aria-hidden="true"></canvas>
 	<div id="root"></div>
+	<script>
+		(() => {
+			const canvas = document.getElementById('silk-background');
+			const gl = canvas.getContext('webgl', { alpha: true, antialias: false });
+			if (!gl) return;
+			const vertexSource = 'attribute vec2 position; void main() { gl_Position = vec4(position, 0.0, 1.0); }';
+			const fragmentSource = `precision mediump float;
+				uniform float time; uniform vec2 resolution; uniform vec3 color;
+				float noise(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+				void main() {
+					vec2 uv = gl_FragCoord.xy / resolution.xy; uv.x *= resolution.x / resolution.y;
+					float t = time * 0.42; uv.y += 0.03 * sin(8.0 * uv.x - t);
+					float pattern = 0.6 + 0.4 * sin(5.0 * (uv.x + uv.y + cos(3.0 * uv.x + 5.0 * uv.y) + 0.02 * t) + sin(20.0 * (uv.x + uv.y - 0.1 * t)));
+					float grain = noise(gl_FragCoord.xy) * 0.045; gl_FragColor = vec4(clamp(color * pattern - grain, 0.0, 1.0), 1.0);
+				}`;
+			const compile = (type, source) => { const shader = gl.createShader(type); gl.shaderSource(shader, source); gl.compileShader(shader); return shader; };
+			const program = gl.createProgram(); gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource)); gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource)); gl.linkProgram(program); gl.useProgram(program);
+			const buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+			const position = gl.getAttribLocation(program, 'position'); gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+			const time = gl.getUniformLocation(program, 'time'); const resolution = gl.getUniformLocation(program, 'resolution'); const color = gl.getUniformLocation(program, 'color');
+			const resize = () => { const ratio = Math.min(window.devicePixelRatio || 1, 2); canvas.width = innerWidth * ratio; canvas.height = innerHeight * ratio; gl.viewport(0, 0, canvas.width, canvas.height); };
+			const draw = now => { gl.uniform1f(time, now * 0.001); gl.uniform2f(resolution, canvas.width, canvas.height); gl.uniform3f(color, 0.635, 0.141, 1.0); gl.drawArrays(gl.TRIANGLES, 0, 6); requestAnimationFrame(draw); };
+			addEventListener('resize', resize); resize(); requestAnimationFrame(draw);
+		})();
+	</script>
 	<script type="text/babel">
 		const { useEffect, useState } = React;
 		const initialStages = [
@@ -149,7 +180,7 @@
 			const addTask = stageId => { if (!newTitle.trim()) return; setStages(current => current.map(stage => stage.id === stageId ? { ...stage, tasks: [...stage.tasks, { id: stageId + '-' + Date.now(), title: newTitle.trim() }] } : stage)); setNewTitle(''); setAddingTo(null); const targetStage = stages.find(stage => stage.id === stageId); recordActivity('Nova atividade: ' + newTitle.trim(), '+', targetStage ? targetStage.name : 'Atividade criada'); };
 			return <main className="shell">
 				<nav className="topbar"><div className="brand"><span className="brand-mark">↗</span><span>Geração de ADS</span></div><span className="eyebrow" style={{margin: 0}}>Visão geral · {currentDate}</span></nav>
-				<section className="hero"><div><p className="eyebrow">Fluxo de entrega</p><h1>Da ideia ao conteúdo que chega pronto.</h1><p className="hero-copy">Um mapa vivo das entregas de produção, com o que já foi construído, os próximos movimentos e os pontos que precisam de atenção.</p></div><div className="hero-side"><div className="hero-side-head"><span>Progresso do fluxo</span><span>{doneTasks} de {totalTasks} itens</span></div><strong>{progress}%</strong><div className="progress-track" style={{marginTop: 14}}><div className="progress-fill" style={{width: progress + '%'}}></div></div><div className="progress-meta"><span>Início da operação</span><span>Próximo ciclo</span></div></div></section>
+				<section className="hero"><div><p className="eyebrow">Fluxo de entrega</p><h1>Da ideia ao conteúdo.</h1><p className="hero-copy">Um mapa vivo das entregas de produção, com o que já foi construído, os próximos movimentos e os pontos que precisam de atenção.</p></div><div className="hero-side"><div className="hero-side-head"><span>Progresso do fluxo</span><span>{doneTasks} de {totalTasks} itens</span></div><strong>{progress}%</strong><div className="progress-track" style={{marginTop: 14}}><div className="progress-fill" style={{width: progress + '%'}}></div></div><div className="progress-meta"><span>Início da operação</span><span>Próximo ciclo</span></div></div></section>
 				<section className="kpis"><div className="kpi"><span className="kpi-label">Itens no fluxo</span><span className="kpi-value">{totalTasks}</span><span className="kpi-note">total</span></div><div className="kpi"><span className="kpi-label">Concluídos</span><span className="kpi-value">{doneTasks}</span><span className="kpi-note">{totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0}%</span></div><div className="kpi"><span className="kpi-label">Em andamento</span><span className="kpi-value">{stages.find(stage => stage.id === 'todo').tasks.length}</span><span className="kpi-note">prioridade</span></div><div className="kpi"><span className="kpi-label">Próximo passo</span><span className="kpi-value">{stages.find(stage => stage.id === 'next').tasks.length}</span><span className="kpi-note">entregas</span></div></section>
 				<section><div className="section-heading"><div><h2>Mapa de entregas</h2><p>Arraste, edite, mova e crie tarefas diretamente no quadro.</p></div><div className="filters">{['Todos', 'A fazer', 'Feito', 'Em seguida'].map(item => <button key={item} className={'filter ' + (filter === item ? 'active' : '')} onClick={() => setFilter(item)}>{item}</button>)}</div></div><div className="stages">{visibleStages.map(stage => <article className={'stage ' + stage.id + (dropTargetId === stage.id ? ' drop-target' : '')} key={stage.id} onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; setDropTargetId(stage.id); }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget)) setDropTargetId(null); }} onDrop={event => handleDrop(event, stage.id)}><div className="stage-bar" style={{background: stage.color}}></div><div className="stage-body"><div className="stage-title"><h3>{stage.name}</h3><span className="count">{stage.tasks.length} {stage.tasks.length === 1 ? 'item' : 'itens'}</span></div><p>{stage.description}</p>{stage.tasks.length === 0 && <div className="empty-stage">Nenhuma tarefa nesta coluna.</div>}{stage.tasks.map(task => <div className={'task ' + (task.title.includes('garimpo') ? 'highlight' : '') + (draggedTaskId === task.id ? ' dragging' : '')} key={task.id} draggable="true" onDragStart={event => handleDragStart(event, task.id)} onDragEnd={() => { setDraggedTaskId(null); setDropTargetId(null); setDropBeforeTaskId(null); }} onDragOver={event => { event.preventDefault(); event.stopPropagation(); setDropTargetId(stage.id); setDropBeforeTaskId(task.id); }} onDrop={event => handleDrop(event, stage.id, task.id)}><span className="task-dot"></span>{editingId === task.id ? <div className="task-card"><div className="task-edit"><input className="task-input" value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => event.key === 'Enter' && saveTask(task.id)} autoFocus /><button className="task-action" onClick={() => saveTask(task.id)}>Salvar</button></div><select className="task-select" value={stage.id} onChange={event => moveTask(task.id, event.target.value, draft)}>{stages.map(option => <option value={option.id} key={option.id}>{option.name}</option>)}</select></div> : <><span className="task-card">{task.title}</span><span className="task-actions"><button className="task-action" aria-label={'Editar ' + task.title} onClick={() => startEditing(task)}>Editar</button><button className="task-action" aria-label={'Excluir ' + task.title} onClick={() => deleteTask(task.id)}>Excluir</button></span></>}</div>)}{addingTo === stage.id ? <div className="add-form"><input className="add-input" placeholder="Nome da nova tarefa" value={newTitle} onChange={event => setNewTitle(event.target.value)} onKeyDown={event => event.key === 'Enter' && addTask(stage.id)} autoFocus /><button className="task-action" onClick={() => addTask(stage.id)}>Adicionar</button><button className="task-action" onClick={() => setAddingTo(null)}>Cancelar</button></div> : <button className="add-task" onClick={() => { setAddingTo(stage.id); setNewTitle(''); }}>＋ Adicionar tarefa</button>}</div></article>)}</div></section>
 				<section className="details"><div className="panel"><h3>Saúde do fluxo</h3><div className="metric-row"><div className="metric-label"><span>Base operacional</span><span>100%</span></div><div className="progress-track"><div className="progress-fill"></div></div></div><div className="metric-row"><div className="metric-label"><span>Automação e scripts</span><span>67%</span></div><div className="progress-track"><div className="progress-fill"></div></div></div><div className="metric-row"><div className="metric-label"><span>Dados e acompanhamento</span><span>33%</span></div><div className="progress-track"><div className="progress-fill"></div></div></div></div><div className="panel"><h3>Últimas movimentações</h3>{activity.map(item => <div className="update" key={item.id}><span className="update-icon">{item.icon}</span><div><b>{item.title}</b><small>{item.detail}</small></div></div>)}</div></section>
