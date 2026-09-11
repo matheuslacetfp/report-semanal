@@ -1,41 +1,52 @@
-# Relatório Semanal
+# Como usar o painel
 
-Este repositório foi criado para organizar e acompanhar relatórios semanais de atividades, progresso e pendências.
+O painel organiza as atividades da operação de conteúdo em três etapas:
 
-## Estrutura
+- **A fazer:** tarefas pendentes.
+- **Feito:** tarefas concluídas.
+- **Em seguida:** tarefas planejadas para o próximo ciclo.
 
-- `templates/relatorio-semanal.md` — modelo base para novos relatórios
-- `relatorios/` — pasta para armazenar os relatórios por semana
-- `supabase-schema.sql` — tabela e políticas para sincronizar o painel
-- `.gitignore` — arquivos e pastas que não devem entrar no controle do Git
+## Criar uma tarefa
 
-## Como usar
+1. Clique em **＋ Adicionar tarefa** na coluna desejada.
+2. Digite o nome da tarefa.
+3. Clique em **Adicionar** ou pressione Enter.
 
-1. Abra o arquivo de template.
-2. Copie o conteúdo para um novo arquivo em `relatorios/`.
-3. Atualize as informações da semana.
-4. Revise metas, entregas, riscos e próximos passos.
+## Editar uma tarefa
 
-## Exemplo de cabeçalho
+1. Passe o mouse sobre a tarefa.
+2. Clique em **Editar**.
+3. Altere o nome ou escolha outra coluna.
+4. Clique em **Salvar** ou pressione Enter.
 
-- Semana:
-- Período:
-- Responsável:
-- Status:
+## Mover uma tarefa
 
-## Checklist
+Arraste a tarefa para outra coluna. Também é possível arrastá-la para uma posição específica dentro da mesma coluna.
 
-- [ ] Objetivos da semana
-- [ ] Tarefas concluídas
-- [ ] Pendências
-- [ ] Riscos
-- [ ] Próximos passos
+## Excluir uma tarefa
 
-## Supabase
+1. Passe o mouse sobre a tarefa.
+2. Clique em **Excluir**.
 
-1. Crie um projeto gratuito em [supabase.com](https://supabase.com).
-2. Abra o SQL Editor e execute o conteúdo de `supabase-schema.sql`.
-3. Em Project Settings → API, copie a Project URL e a chave `anon`.
-4. Cole os valores em `SUPABASE_URL` e `SUPABASE_ANON_KEY` no `index.html`.
+A tarefa será removida do painel.
 
-Enquanto esses valores estiverem como placeholder, o painel continua usando o armazenamento local. Depois da configuração, os cards e as atividades serão carregados e salvos na tabela `dashboard_state`.
+## Filtrar tarefas
+
+Use os botões no topo do mapa de entregas para visualizar:
+
+- **Todos:** mostra todas as tarefas.
+- **A fazer:** mostra apenas as tarefas pendentes.
+- **Feito:** mostra apenas as tarefas concluídas.
+- **Em seguida:** mostra apenas as próximas tarefas.
+
+## Acompanhar o progresso
+
+O painel atualiza automaticamente:
+
+- a quantidade total de tarefas;
+- o número de tarefas concluídas;
+- o percentual geral de progresso;
+- as atividades recentes;
+- a saúde do fluxo de trabalho.
+
+As alterações são salvas automaticamente. Não é necessário clicar em um botão de salvar.
