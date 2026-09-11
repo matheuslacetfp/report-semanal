@@ -8,6 +8,7 @@
 	<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
 	<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 	<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<style>
 		@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 		:root { --bg: #080611; --panel: #110c1c; --panel-soft: #181126; --line: #302143; --text: #f7f4ff; --muted: #b3a9c4; --purple: #9b7cf4; --purple-2: #704dcc; --green: #4fd18b; --blue: #70a8ff; --yellow: #f9cf52; }
@@ -141,6 +142,9 @@
 	</script>
 	<script type="text/babel">
 		const { useEffect, useState } = React;
+		const SUPABASE_URL = 'https://zdqgugplqtnjysktfntb.supabase.co';
+		const SUPABASE_ANON_KEY = 'sb_publishable_ZfmVSafEvd8N1kAZdHUbdQ_C_uTqqrO';
+		const supabaseClient = window.supabase && !SUPABASE_URL.includes('COLE_') && !SUPABASE_ANON_KEY.includes('COLE_') ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 		const initialStages = [
 			{ id: 'todo', name: 'A fazer', description: 'Próximas ações para destravar a operação', color: '#70a8ff', tasks: ['Validação de cadeia produtiva', 'Formatar saídas de formatos criativos', 'Acesso YouTube Analytics'] },
 			{ id: 'done', name: 'Feito', description: 'Entregas concluídas e em uso', color: '#4fd18b', tasks: ['Estudo e definição de abordagem', 'Criação de fluxo para mineração de conteúdo', 'Criação de fluxo de edição', 'Criação de script para transcrição', 'Alimentar planilha de garimpo (recorrente)'] },
@@ -154,6 +158,7 @@
 
 		function App() {
 			const [stages, setStages] = useState(() => { try { return JSON.parse(localStorage.getItem('fluxo-stages')) || initialStages; } catch (error) { return initialStages; } });
+			const [isHydrated, setIsHydrated] = useState(!supabaseClient);
 			const [filter, setFilter] = useState('Todos');
 			const [editingId, setEditingId] = useState(null);
 			const [draft, setDraft] = useState('');
@@ -164,8 +169,8 @@
 			const [dropBeforeTaskId, setDropBeforeTaskId] = useState(null);
 			const [activity, setActivity] = useState(() => { try { return JSON.parse(localStorage.getItem('fluxo-activity')) || initialActivity; } catch (error) { return initialActivity; } });
 			const currentDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date());
-			useEffect(() => { localStorage.setItem('fluxo-stages', JSON.stringify(stages)); }, [stages]);
-			useEffect(() => { localStorage.setItem('fluxo-activity', JSON.stringify(activity)); }, [activity]);
+			useEffect(() => { const loadRemoteState = async () => { if (!supabaseClient) return; const { data, error } = await supabaseClient.from('dashboard_state').select('stages, activity').eq('id', 'main').maybeSingle(); if (!error && data) { const remoteStages = Array.isArray(data.stages) && data.stages.length ? data.stages : stages; const remoteActivity = Array.isArray(data.activity) ? data.activity : activity; setStages(remoteStages); setActivity(remoteActivity); localStorage.setItem('fluxo-stages', JSON.stringify(remoteStages)); localStorage.setItem('fluxo-activity', JSON.stringify(remoteActivity)); } setIsHydrated(true); }; loadRemoteState(); }, []);
+			useEffect(() => { if (!isHydrated) return; localStorage.setItem('fluxo-stages', JSON.stringify(stages)); localStorage.setItem('fluxo-activity', JSON.stringify(activity)); if (supabaseClient) supabaseClient.from('dashboard_state').upsert({ id: 'main', stages, activity, updated_at: new Date().toISOString() }).then(({ error }) => { if (error) console.error('Não foi possível salvar no Supabase:', error); }); }, [stages, activity, isHydrated]);
 			const recordActivity = (title, icon, detail = 'Alteração registrada agora') => { const time = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date()); setActivity(current => [{ id: 'activity-' + Date.now(), icon, title, detail: detail === 'Alteração registrada agora' ? detail + ' · ' + time : detail }, ...current].slice(0, 6)); };
 			const visibleStages = filter === 'Todos' ? stages : stages.filter(stage => stage.name === filter);
 			const totalTasks = stages.reduce((total, stage) => total + stage.tasks.length, 0);
