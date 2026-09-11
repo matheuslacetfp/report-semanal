@@ -155,11 +155,13 @@
 		const normalizeStages = (state) => {
 			if (!Array.isArray(state) || !state.length) return initialStages;
 			const mapping = { 'A fazer': 'Em seguida', 'Feito': 'Ativo', 'Em andamento': 'Ativo', 'Em seguida': 'Em seguida', 'Ativo': 'Ativo', 'Concluído': 'Concluído' };
-			return state.map(stage => ({
+			const normalizedStages = state.map(stage => ({
 				...stage,
-				name: mapping[stage?.name] || stage?.name || 'Em seguida',
+				name: { todo: 'Em seguida', done: 'Ativo', next: 'Concluído' }[stage?.id] || mapping[stage?.name] || stage?.name || 'Em seguida',
 				tasks: Array.isArray(stage?.tasks) ? stage.tasks.map((task, index) => typeof task === 'string' ? { id: `${stage.id || 'stage'}-${index}`, title: task } : { ...task, id: task.id || `${stage.id || 'stage'}-${index}` }) : []
 			}));
+			const stageOrder = { todo: 0, done: 1, next: 2 };
+			return normalizedStages.sort((first, second) => (stageOrder[first.id] ?? 99) - (stageOrder[second.id] ?? 99));
 		};
 		const initialActivity = [
 			{ id: 'activity-1', icon: '✓', title: 'Script de transcrição concluído', detail: 'Entrega registrada hoje' },
