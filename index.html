@@ -142,7 +142,7 @@
 		})();
 	</script>
 	<script type="text/babel">
-		const { useEffect, useState } = React;
+		const { useEffect, useRef, useState } = React;
 		const SUPABASE_URL = 'https://zdqgugplqtnjysktfntb.supabase.co';
 		const SUPABASE_ANON_KEY = 'sb_publishable_ZfmVSafEvd8N1kAZdHUbdQ_C_uTqqrO';
 		const supabaseClient = window.supabase && !SUPABASE_URL.includes('COLE_') && !SUPABASE_ANON_KEY.includes('COLE_') ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -161,6 +161,7 @@
 			const [stages, setStages] = useState(() => { try { return JSON.parse(localStorage.getItem('fluxo-stages')) || initialStages; } catch (error) { return initialStages; } });
 			const [isHydrated, setIsHydrated] = useState(!supabaseClient);
 			const [syncStatus, setSyncStatus] = useState(supabaseClient ? 'Sincronizado' : 'Local');
+			const skipNextSave = useRef(false);
 			const [filter, setFilter] = useState('Todos');
 			const [editingId, setEditingId] = useState(null);
 			const [draft, setDraft] = useState('');
@@ -172,7 +173,8 @@
 			const [activity, setActivity] = useState(() => { try { return JSON.parse(localStorage.getItem('fluxo-activity')) || initialActivity; } catch (error) { return initialActivity; } });
 			const currentDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date());
 			useEffect(() => { const loadRemoteState = async () => { if (!supabaseClient) return; const { data, error } = await supabaseClient.from('dashboard_state').select('stages, activity').eq('id', 'main').maybeSingle(); if (!error && data) { const remoteStages = Array.isArray(data.stages) && data.stages.length ? data.stages : stages; const remoteActivity = Array.isArray(data.activity) ? data.activity : activity; setStages(remoteStages); setActivity(remoteActivity); localStorage.setItem('fluxo-stages', JSON.stringify(remoteStages)); localStorage.setItem('fluxo-activity', JSON.stringify(remoteActivity)); } setIsHydrated(true); }; loadRemoteState(); }, []);
-			useEffect(() => { if (!isHydrated) return; localStorage.setItem('fluxo-stages', JSON.stringify(stages)); localStorage.setItem('fluxo-activity', JSON.stringify(activity)); if (!supabaseClient) return; setSyncStatus('Salvando...'); const saveTimer = setTimeout(async () => { const { error } = await supabaseClient.from('dashboard_state').upsert({ id: 'main', stages, activity, updated_at: new Date().toISOString() }); if (error) { console.error('Não foi possível salvar no Supabase:', error); setSyncStatus('Erro ao salvar'); } else setSyncStatus('Sincronizado'); }, 250); return () => clearTimeout(saveTimer); }, [stages, activity, isHydrated]);
+			useEffect(() => { if (!supabaseClient) return; const channel = supabaseClient.channel('dashboard-state-sync').on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_state', filter: 'id=eq.main' }, payload => { const nextState = payload.new; if (!nextState || !Array.isArray(nextState.stages) || !Array.isArray(nextState.activity)) return; skipNextSave.current = true; setStages(nextState.stages); setActivity(nextState.activity); localStorage.setItem('fluxo-stages', JSON.stringify(nextState.stages)); localStorage.setItem('fluxo-activity', JSON.stringify(nextState.activity)); setSyncStatus('Sincronizado'); }).subscribe(status => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setSyncStatus('Realtime indisponível'); }); return () => { supabaseClient.removeChannel(channel); }; }, []);
+			useEffect(() => { if (!isHydrated) return; localStorage.setItem('fluxo-stages', JSON.stringify(stages)); localStorage.setItem('fluxo-activity', JSON.stringify(activity)); if (!supabaseClient) return; if (skipNextSave.current) { skipNextSave.current = false; return; } setSyncStatus('Salvando...'); const saveTimer = setTimeout(async () => { const { error } = await supabaseClient.from('dashboard_state').upsert({ id: 'main', stages, activity, updated_at: new Date().toISOString() }); if (error) { console.error('Não foi possível salvar no Supabase:', error); setSyncStatus('Erro ao salvar'); } else setSyncStatus('Sincronizado'); }, 250); return () => clearTimeout(saveTimer); }, [stages, activity, isHydrated]);
 			const recordActivity = (title, icon, detail = 'Alteração registrada agora') => { const time = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date()); setActivity(current => [{ id: 'activity-' + Date.now(), icon, title, detail: detail === 'Alteração registrada agora' ? detail + ' · ' + time : detail }, ...current].slice(0, 6)); };
 			const visibleStages = filter === 'Todos' ? stages : stages.filter(stage => stage.name === filter);
 			const totalTasks = stages.reduce((total, stage) => total + stage.tasks.length, 0);
