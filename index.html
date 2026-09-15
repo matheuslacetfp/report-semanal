@@ -1,14 +1,255 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#120d24" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <title>Fluxo de entrega | Operação de conteúdo</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="theme-color" content="#120d24" />
+	<link rel="icon" type="image/png" href="favicon.png" />
+	<title>Fluxo de entrega | Operação de conteúdo</title>
+	<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+	<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+	<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+		:root { --bg: #080611; --panel: #110c1c; --panel-soft: #181126; --line: #302143; --text: #f7f4ff; --muted: #b3a9c4; --purple: #9b7cf4; --purple-2: #704dcc; --green: #4fd18b; --blue: #70a8ff; --yellow: #f9cf52; }
+		* { box-sizing: border-box; }
+		body { margin: 0; color: var(--text); background: var(--bg); font-family: 'DM Sans', sans-serif; background-image: radial-gradient(circle at 80% 0%, rgba(112, 77, 204, .13), transparent 32rem), linear-gradient(125deg, #080611 0%, #0e0918 54%, #05040b 100%); min-height: 100vh; }
+		#silk-background { position: fixed; inset: 0; width: 100%; height: 100%; opacity: .22; pointer-events: none; z-index: 0; }
+		#root { position: relative; z-index: 1; }
+		button { font: inherit; }
+		.shell { width: min(1180px, calc(100% - 40px)); margin: auto; padding: 34px 0 54px; }
+		.topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 46px; }
+		.brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: -.02em; }
+		.brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: linear-gradient(135deg, #b298ff, #6944c4); box-shadow: 0 8px 24px rgba(112, 77, 204, .35); color: #fff; font-weight: 700; }
+		.eyebrow { margin: 0 0 10px; color: var(--purple); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+		.sync-status { color: var(--muted); font-size: 10px; letter-spacing: 0; text-transform: none; }
+		h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; margin: 0; letter-spacing: -.04em; }
+		h1 { max-width: 680px; font-size: clamp(2.2rem, 5vw, 4.5rem); line-height: .98; }
+		.hero { display: grid; grid-template-columns: 1.25fr .75fr; gap: 34px; align-items: end; margin-bottom: 34px; }
+		.hero-copy { color: var(--muted); max-width: 590px; font-size: 16px; line-height: 1.6; margin: 19px 0 0; }
+		.hero-side, .kpi, .stage, .panel { position: relative; isolation: isolate; background: linear-gradient(145deg, rgba(18,12,30,.88), rgba(8,6,16,.76)); border: 1px solid rgba(255,255,255,.22); box-shadow: 0 22px 50px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(18px) saturate(135%); -webkit-backdrop-filter: blur(18px) saturate(135%); }
+		.hero-side::before, .kpi::before, .stage::before, .panel::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: radial-gradient(circle at 0% 0%, rgba(162,54,255,.22), transparent 42%), linear-gradient(120deg, rgba(255,255,255,.06), transparent 38%); pointer-events: none; }
+		.hero-side { border-radius: 18px; padding: 22px; }
+		.hero-side-head, .progress-meta { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+		.hero-side-head { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+		.hero-side strong { font-size: 34px; font-family: 'Space Grotesk'; }
+		.progress-track { height: 9px; border-radius: 99px; background: #332746; overflow: hidden; }
+		.progress-fill { height: 100%; width: 42%; border-radius: inherit; background: linear-gradient(90deg, var(--purple-2), #bda9ff); }
+		.progress-meta { color: var(--muted); font-size: 12px; margin-top: 10px; }
+		.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 38px; }
+		.kpi { padding: 18px 20px; border-radius: 14px; transition: transform .25s ease, border-color .25s ease, background .25s ease; }
+		.kpi:hover { transform: translateY(-3px); border-color: rgba(255,255,255,.4); background: linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.045)); }
+		.kpi-label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+		.kpi-value { font: 600 30px 'Space Grotesk'; }
+		.kpi-note { color: var(--purple); font-size: 12px; margin-left: 7px; }
+		.section-heading { display: flex; justify-content: space-between; align-items: end; gap: 18px; margin-bottom: 16px; }
+		.section-heading h2 { font-size: 22px; }
+		.section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+		.filters { display: flex; gap: 7px; flex-wrap: wrap; }
+		.filter { border: 1px solid var(--line); border-radius: 99px; color: var(--muted); background: transparent; padding: 8px 13px; cursor: pointer; font-size: 12px; transition: .2s ease; }
+		.filter:hover, .filter.active { color: #fff; border-color: var(--purple); background: rgba(155, 124, 244, .14); }
+		.stages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin-bottom: 40px; }
+		.stage { border-radius: 16px; overflow: hidden; }
+		.stage-bar { height: 5px; }
+		.stage-body { padding: 19px 20px 17px; }
+		.stage-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 5px; }
+		.stage-title h3 { font-size: 19px; }
+		.count { color: var(--muted); font-size: 12px; }
+		.stage-body > p { color: var(--muted); margin: 0 0 17px; font-size: 12px; }
+		.task { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-top: 1px solid rgba(53, 40, 77, .66); color: #ded8e9; font-size: 13px; line-height: 1.4; }
+		.task:first-of-type { border-top: 0; }
+		.task-dot { flex: 0 0 7px; width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: var(--purple); }
+		.task-card { position: relative; display: flex; flex-direction: column; gap: 9px; width: 100%; }
+		.task[draggable="true"] { cursor: grab; }
+		.task.dragging { opacity: .42; }
+		.stage.drop-target { border-color: var(--purple); box-shadow: 0 0 0 2px rgba(155, 124, 244, .2), 0 18px 42px rgba(112, 77, 204, .18); }
+		.stage.drop-target .stage-body { background: rgba(155, 124, 244, .06); }
+		.task-actions { display: flex; align-items: center; gap: 5px; margin-left: auto; opacity: 0; transition: opacity .2s ease; }
+		.task:hover .task-actions, .task:focus-within .task-actions { opacity: 1; }
+		.task-action, .add-task { border: 0; color: var(--muted); background: transparent; cursor: pointer; font-size: 11px; padding: 3px 5px; border-radius: 5px; }
+		.task-action:hover { color: #fff; background: rgba(155, 124, 244, .18); }
+		.task-edit { display: flex; gap: 7px; align-items: center; }
+		.task-input, .add-input { min-width: 0; width: 100%; border: 1px solid var(--purple); outline: 0; border-radius: 7px; color: var(--text); background: #110d1d; padding: 8px 9px; font: inherit; font-size: 13px; }
+		.task-select { border: 1px solid var(--line); border-radius: 6px; color: var(--muted); background: #110d1d; padding: 5px 6px; font-size: 11px; }
+		.add-task { display: flex; align-items: center; gap: 5px; color: var(--purple); margin-top: 12px; padding: 7px 0 0; }
+		.add-task:hover { color: #fff; }
+		.add-form { display: flex; gap: 6px; margin-top: 12px; }
+		.add-form .task-action { flex: 0 0 auto; border: 1px solid var(--purple); color: #fff; background: rgba(155, 124, 244, .14); padding: 6px 8px; }
+		.empty-stage { color: var(--muted); font-size: 12px; padding: 10px 0; }
+		.stage.todo .task-dot { background: var(--blue); }
+		.stage.done .task-dot { background: var(--green); }
+		.stage.next .task-dot { background: var(--yellow); }
+		.highlight { background: rgba(249, 207, 82, .12); color: #ffe994; border-radius: 7px; padding: 8px 9px; margin: 5px -9px -1px; }
+		.highlight .task-dot { background: var(--yellow); }
+		.details { display: grid; grid-template-columns: 1.05fr .95fr; gap: 14px; }
+		.routine { margin: 0 0 40px; }
+		.routine-calendar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+		.routine-day { min-height: 132px; padding: 16px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(7,5,14,.56); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+		.routine-day:nth-child(odd) { border-top: 3px solid var(--purple); }
+		.routine-day:nth-child(even) { border-top: 3px solid var(--blue); }
+		.routine-day h3 { color: #fff; font-size: 15px; margin-bottom: 18px; }
+		.routine-task { color: #ded8e9; font-size: 13px; line-height: 1.45; }
+		.routine-task::before { content: '•'; color: var(--purple); margin-right: 7px; }
+		.routine-day.is-today { border-color: var(--yellow); background: rgba(249, 207, 82, .13); box-shadow: 0 0 0 1px rgba(249, 207, 82, .3), 0 0 24px rgba(249, 207, 82, .16); animation: routine-pulse 2.4s ease-in-out infinite; }
+		.routine-day.is-today h3::after { content: 'Hoje'; display: inline-block; margin-left: 8px; color: var(--yellow); font: 600 10px 'DM Sans', sans-serif; letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; }
+		@keyframes routine-pulse { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+		@media (prefers-reduced-motion: reduce) { .routine-day.is-today { animation: none; } }
+		.panel { border-radius: 16px; padding: 22px; }
+		.panel h3 { font-size: 18px; margin-bottom: 18px; }
+		.panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+		.panel-header h3 { margin-bottom: 4px; }
+		.panel-header p { color: var(--muted); font-size: 11px; margin: 0; }
+		.panel-summary { color: var(--purple); font: 600 18px 'Space Grotesk'; white-space: nowrap; }
+		.metric-list { display: grid; gap: 15px; }
+		.metric-row { position: relative; padding: 13px 14px 14px; margin: 0; border: 1px solid rgba(255,255,255,.14); border-radius: 11px; background: rgba(7,5,14,.56); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+		.metric-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #e9e4f1; font-size: 13px; margin-bottom: 6px; }
+		.metric-name { display: flex; align-items: center; gap: 8px; }
+		.metric-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--purple); }
+		.metric-status { color: var(--muted); font-size: 11px; }
+		.metric-value { color: #fff; font-size: 12px; font-weight: 600; }
+		.metric-row .progress-fill { width: 100%; background: linear-gradient(90deg, #704dcc, #bda9ff); }
+		.metric-row:nth-of-type(1) .progress-fill { width: 100%; background: linear-gradient(90deg, #3eae71, #7ce5ab); }
+		.metric-row:nth-of-type(2) .progress-fill { width: 67%; background: linear-gradient(90deg, #4c7fda, #8bbaff); }
+		.metric-row:nth-of-type(3) .progress-fill { width: 33%; background: linear-gradient(90deg, #704dcc, #bda9ff); }
+		.update { display: flex; gap: 13px; padding: 11px 0; border-top: 1px solid rgba(53, 40, 77, .66); }
+		.update:first-of-type { border-top: 0; padding-top: 0; }
+		.update-icon { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #c8baff; background: rgba(155, 124, 244, .16); font-size: 13px; }
+		.update b { display: block; color: #eeeaf7; font-size: 13px; font-weight: 600; }
+		.update small { color: var(--muted); display: block; font-size: 11px; margin-top: 3px; }
+		.monitored-folders { margin: 0 0 40px; }
+		.folder-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+		.folder-card { position: relative; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 15px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; color: var(--text); background: rgba(7,5,14,.56); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); text-decoration: none; transition: transform .2s ease, border-color .2s ease, background .2s ease; }
+		.folder-card:hover { transform: translateY(-3px); border-color: var(--purple); background: rgba(155, 124, 244, .12); }
+		.folder-icon { flex: 0 0 34px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: #d8ceff; background: rgba(155, 124, 244, .16); font-size: 17px; }
+		.folder-info { min-width: 0; }
+		.folder-name, .folder-url { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.folder-name { color: #eeeaf7; font-size: 13px; font-weight: 600; }
+		.folder-url { margin-top: 3px; color: var(--muted); font-size: 11px; }
+		.folder-actions { display: flex; gap: 3px; margin-left: auto; opacity: 0; }
+		.folder-card:hover .folder-actions, .folder-card:focus-within .folder-actions { opacity: 1; }
+		.folder-edit, .folder-add-form { display: grid; grid-template-columns: 1fr 1.5fr auto; gap: 7px; width: 100%; }
+		.folder-empty { grid-column: 1 / -1; padding: 18px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 12px; text-align: center; }
+		.folder-add-form { margin-top: 12px; }
+		.folder-add-form .task-action { border: 1px solid var(--purple); color: #fff; background: rgba(155, 124, 244, .14); padding: 7px 10px; }
+		.footer { color: #776c89; font-size: 12px; text-align: center; margin-top: 42px; }
+		@media (max-width: 800px) { .shell { width: min(100% - 28px, 620px); padding-top: 22px; } .topbar { margin-bottom: 34px; } .hero, .details { grid-template-columns: 1fr; } .kpis { grid-template-columns: repeat(2, 1fr); } .stages, .folder-grid { grid-template-columns: 1fr; } .routine-calendar { grid-template-columns: repeat(2, 1fr); } h1 { font-size: 3rem; } }
+		@media (max-width: 430px) { .kpis { gap: 8px; } .kpi { padding: 15px; } .kpi-value { font-size: 25px; } .section-heading { align-items: flex-start; flex-direction: column; } }
+	</style>
+</head>
+<body>
+	<canvas id="silk-background" aria-hidden="true"></canvas>
+	<div id="root"></div>
+	<script>
+		(() => {
+			const canvas = document.getElementById('silk-background');
+			const gl = canvas.getContext('webgl', { alpha: true, antialias: false });
+			if (!gl) return;
+			const vertexSource = 'attribute vec2 position; void main() { gl_Position = vec4(position, 0.0, 1.0); }';
+			const fragmentSource = `precision mediump float;
+				uniform float time; uniform vec2 resolution; uniform vec3 color;
+				float noise(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+				void main() {
+					vec2 uv = gl_FragCoord.xy / resolution.xy; uv.x *= resolution.x / resolution.y;
+					float t = time * 0.42; uv.y += 0.03 * sin(8.0 * uv.x - t);
+					float pattern = 0.6 + 0.4 * sin(5.0 * (uv.x + uv.y + cos(3.0 * uv.x + 5.0 * uv.y) + 0.02 * t) + sin(20.0 * (uv.x + uv.y - 0.1 * t)));
+					float grain = noise(gl_FragCoord.xy) * 0.045; gl_FragColor = vec4(clamp(color * pattern - grain, 0.0, 1.0), 1.0);
+				}`;
+			const compile = (type, source) => { const shader = gl.createShader(type); gl.shaderSource(shader, source); gl.compileShader(shader); return shader; };
+			const program = gl.createProgram(); gl.attachShader(program, compile(gl.VERTEX_SHADER, vertexSource)); gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragmentSource)); gl.linkProgram(program); gl.useProgram(program);
+			const buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+			const position = gl.getAttribLocation(program, 'position'); gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+			const time = gl.getUniformLocation(program, 'time'); const resolution = gl.getUniformLocation(program, 'resolution'); const color = gl.getUniformLocation(program, 'color');
+			const resize = () => { const ratio = Math.min(window.devicePixelRatio || 1, 2); canvas.width = innerWidth * ratio; canvas.height = innerHeight * ratio; gl.viewport(0, 0, canvas.width, canvas.height); };
+			const draw = now => { gl.uniform1f(time, now * 0.001); gl.uniform2f(resolution, canvas.width, canvas.height); gl.uniform3f(color, 0.635, 0.141, 1.0); gl.drawArrays(gl.TRIANGLES, 0, 6); requestAnimationFrame(draw); };
+			addEventListener('resize', resize); resize(); requestAnimationFrame(draw);
+		})();
+	</script>
+	<script type="text/babel">
+		const { useEffect, useRef, useState } = React;
+		const SUPABASE_URL = 'https://zdqgugplqtnjysktfntb.supabase.co';
+		const SUPABASE_ANON_KEY = 'sb_publishable_ZfmVSafEvd8N1kAZdHUbdQ_C_uTqqrO';
+		const supabaseClient = window.supabase && !SUPABASE_URL.includes('COLE_') && !SUPABASE_ANON_KEY.includes('COLE_') ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+		const initialStages = [
+			{ id: 'todo', name: 'Em seguida', description: 'Próximas ações para destravar a operação', color: '#70a8ff', tasks: ['Validação de cadeia produtiva', 'Formatar saídas de formatos criativos', 'Acesso YouTube Analytics'] },
+			{ id: 'done', name: 'Ativo', description: 'Entregas em execução e em uso', color: '#4fd18b', tasks: ['Estudo e definição de abordagem', 'Criação de fluxo para mineração de conteúdo', 'Criação de fluxo de edição', 'Criação de script para transcrição', 'Alimentar planilha de garimpo (recorrente)'] },
+			{ id: 'next', name: 'Concluído', description: 'Itens que entram no próximo ciclo', color: '#9b7cf4', tasks: ['Concepção e criação de planilha para acompanhamento', 'Refinar ingestão de dados a partir da validação de fluxo'] }
+		].map(stage => ({ ...stage, tasks: stage.tasks.map((title, index) => ({ id: stage.id + '-' + index, title })) }));
+		const normalizeStages = (state) => {
+			if (!Array.isArray(state) || !state.length) return initialStages;
+			const mapping = { 'A fazer': 'Em seguida', 'Feito': 'Ativo', 'Em andamento': 'Ativo', 'Em seguida': 'Em seguida', 'Ativo': 'Ativo', 'Concluído': 'Concluído' };
+			const normalizedStages = state.map(stage => ({
+				...stage,
+				name: { todo: 'Em seguida', done: 'Ativo', next: 'Concluído' }[stage?.id] || mapping[stage?.name] || stage?.name || 'Em seguida',
+				tasks: Array.isArray(stage?.tasks) ? stage.tasks.map((task, index) => typeof task === 'string' ? { id: `${stage.id || 'stage'}-${index}`, title: task } : { ...task, id: task.id || `${stage.id || 'stage'}-${index}` }) : []
+			}));
+			const stageOrder = { todo: 0, done: 1, next: 2 };
+			return normalizedStages.sort((first, second) => (stageOrder[first.id] ?? 99) - (stageOrder[second.id] ?? 99));
+		};
+		const initialActivity = [
+			{ id: 'activity-1', icon: '✓', title: 'Script de transcrição concluído', detail: 'Entrega registrada hoje' },
+			{ id: 'activity-2', icon: '↗', title: 'Planilha de acompanhamento priorizada', detail: 'Próximo ciclo de trabalho' },
+			{ id: 'activity-3', icon: '•', title: 'Validação da cadeia produtiva', detail: 'Aguardando início' }
+		];
+		const normalizeFolders = state => Array.isArray(state) ? state.filter(folder => folder && typeof folder.url === 'string' && folder.url.trim()).map((folder, index) => ({ id: folder.id || 'folder-' + index, name: folder.name || folder.url, url: folder.url })) : [];
+
+		function App() {
+			const [stages, setStages] = useState(() => { try { const savedStages = JSON.parse(localStorage.getItem('fluxo-stages')); return normalizeStages(savedStages); } catch (error) { return initialStages; } });
+			const [isHydrated, setIsHydrated] = useState(!supabaseClient);
+			const [syncStatus, setSyncStatus] = useState(supabaseClient ? 'Sincronizado' : 'Local');
+			const skipNextSave = useRef(false);
+			const [filter, setFilter] = useState('Todos');
+			const [editingId, setEditingId] = useState(null);
+			const [draft, setDraft] = useState('');
+			const [addingTo, setAddingTo] = useState(null);
+			const [newTitle, setNewTitle] = useState('');
+			const [draggedTaskId, setDraggedTaskId] = useState(null);
+			const [dropTargetId, setDropTargetId] = useState(null);
+			const [dropBeforeTaskId, setDropBeforeTaskId] = useState(null);
+			const [activity, setActivity] = useState(() => { try { return JSON.parse(localStorage.getItem('fluxo-activity')) || initialActivity; } catch (error) { return initialActivity; } });
+			const [folders, setFolders] = useState(() => { try { return normalizeFolders(JSON.parse(localStorage.getItem('fluxo-folders'))); } catch (error) { return []; } });
+			const [isAddingFolder, setIsAddingFolder] = useState(false);
+			const [editingFolderId, setEditingFolderId] = useState(null);
+			const [folderDraft, setFolderDraft] = useState({ name: '', url: '' });
+			const currentDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date());
+			const currentWeekday = new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(new Date()).replace('-feira', '');
+			useEffect(() => { const loadRemoteState = async () => { if (!supabaseClient) return; let result = await supabaseClient.from('dashboard_state').select('stages, activity, monitored_folders').eq('id', 'main').maybeSingle(); if (result.error?.code === 'PGRST204') result = await supabaseClient.from('dashboard_state').select('stages, activity').eq('id', 'main').maybeSingle(); const { data, error } = result; if (!error && data) { const remoteStages = normalizeStages(Array.isArray(data.stages) && data.stages.length ? data.stages : stages); const remoteActivity = Array.isArray(data.activity) ? data.activity : activity; const remoteFolders = Array.isArray(data.monitored_folders) ? normalizeFolders(data.monitored_folders) : folders; setStages(remoteStages); setActivity(remoteActivity); setFolders(remoteFolders); localStorage.setItem('fluxo-stages', JSON.stringify(remoteStages)); localStorage.setItem('fluxo-activity', JSON.stringify(remoteActivity)); localStorage.setItem('fluxo-folders', JSON.stringify(remoteFolders)); } setIsHydrated(true); }; loadRemoteState(); }, []);
+			useEffect(() => { if (!supabaseClient) return; const channel = supabaseClient.channel('dashboard-state-sync').on('postgres_changes', { event: '*', schema: 'public', table: 'dashboard_state', filter: 'id=eq.main' }, payload => { const nextState = payload.new; if (!nextState || !Array.isArray(nextState.stages) || !Array.isArray(nextState.activity)) return; const normalizedStages = normalizeStages(nextState.stages); skipNextSave.current = true; setStages(normalizedStages); setActivity(nextState.activity); setFolders(current => Array.isArray(nextState.monitored_folders) ? normalizeFolders(nextState.monitored_folders) : current); localStorage.setItem('fluxo-stages', JSON.stringify(normalizedStages)); localStorage.setItem('fluxo-activity', JSON.stringify(nextState.activity)); if (Array.isArray(nextState.monitored_folders)) localStorage.setItem('fluxo-folders', JSON.stringify(normalizeFolders(nextState.monitored_folders))); setSyncStatus('Sincronizado'); }).subscribe(status => { if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setSyncStatus('Realtime indisponível'); }); return () => { supabaseClient.removeChannel(channel); }; }, []);
+			useEffect(() => { if (!isHydrated) return; localStorage.setItem('fluxo-stages', JSON.stringify(stages)); localStorage.setItem('fluxo-activity', JSON.stringify(activity)); localStorage.setItem('fluxo-folders', JSON.stringify(folders)); if (!supabaseClient) return; if (skipNextSave.current) { skipNextSave.current = false; return; } setSyncStatus('Salvando...'); const saveTimer = setTimeout(async () => { let result = await supabaseClient.from('dashboard_state').upsert({ id: 'main', stages, activity, monitored_folders: folders, updated_at: new Date().toISOString() }); if (result.error?.code === 'PGRST204') result = await supabaseClient.from('dashboard_state').upsert({ id: 'main', stages, activity, updated_at: new Date().toISOString() }); if (result.error) { console.error('Não foi possível salvar no Supabase:', result.error); setSyncStatus('Erro ao salvar'); } else setSyncStatus('Sincronizado'); }, 250); return () => clearTimeout(saveTimer); }, [stages, activity, folders, isHydrated]);
+			const recordActivity = (title, icon, detail = 'Alteração registrada agora') => { const time = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date()); setActivity(current => [{ id: 'activity-' + Date.now(), icon, title, detail: detail === 'Alteração registrada agora' ? detail + ' · ' + time : detail }, ...current].slice(0, 6)); };
+			const visibleStages = filter === 'Todos' ? stages : stages.filter(stage => stage.name === filter);
+			const totalTasks = stages.reduce((total, stage) => total + stage.tasks.length, 0);
+			const completedStage = stages.find(stage => stage.name === 'Concluído') || stages.find(stage => stage.id === 'next') || { tasks: [] };
+			const doneTasks = completedStage.tasks.length;
+			const progress = totalTasks ? Math.round(doneTasks / totalTasks * 100) : 0;
+			const stagePercentage = stage => totalTasks ? Math.round(stage.tasks.length / totalTasks * 100) : 0;
+			const stageById = id => stages.find(stage => stage.id === id) || { tasks: [] };
+			const nextStage = stageById('todo');
+			const activeStage = stageById('done');
+			const completedStageForSummary = stageById('next');
+			const startEditing = task => { setEditingId(task.id); setDraft(task.title); };
+			const saveTask = (taskId) => { if (!draft.trim()) return; const previousTask = stages.flatMap(stage => stage.tasks).find(task => task.id === taskId); setStages(current => current.map(stage => ({ ...stage, tasks: stage.tasks.map(task => task.id === taskId ? { ...task, title: draft.trim() } : task) }))); setEditingId(null); if (previousTask && previousTask.title !== draft.trim()) recordActivity('Atividade editada: ' + draft.trim(), '✎'); };
+			const deleteTask = taskId => { const deletedTask = stages.flatMap(stage => stage.tasks).find(task => task.id === taskId); setStages(current => current.map(stage => ({ ...stage, tasks: stage.tasks.filter(task => task.id !== taskId) }))); if (deletedTask) recordActivity('Atividade excluída: ' + deletedTask.title, '×'); };
+			const moveTask = (taskId, nextStageId, titleOverride, beforeTaskId = null) => { let movedTask; let previousStage; const withoutTask = stages.map(stage => ({ ...stage, tasks: stage.tasks.filter(task => { if (task.id === taskId) { movedTask = { ...task, ...(titleOverride && { title: titleOverride.trim() }) }; previousStage = stage; } return task.id !== taskId; }) })); if (!movedTask) return; setStages(withoutTask.map(stage => { if (stage.id !== nextStageId) return stage; const insertionIndex = beforeTaskId ? stage.tasks.findIndex(task => task.id === beforeTaskId) : -1; const tasks = [...stage.tasks]; tasks.splice(insertionIndex < 0 ? tasks.length : insertionIndex, 0, movedTask); return { ...stage, tasks }; })); setEditingId(null); const nextStage = stages.find(stage => stage.id === nextStageId); const changedColumn = previousStage && previousStage.id !== nextStageId; recordActivity(changedColumn ? movedTask.title + ' movida para ' + nextStage.name : movedTask.title + ' reordenada', changedColumn ? '↗' : '↕'); };
+			const handleDragStart = (event, taskId) => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', taskId); setDraggedTaskId(taskId); };
+			const handleDrop = (event, stageId, beforeTaskId = null) => { event.preventDefault(); event.stopPropagation(); const taskId = event.dataTransfer.getData('text/plain') || draggedTaskId; if (taskId) moveTask(taskId, stageId, null, beforeTaskId); setDraggedTaskId(null); setDropTargetId(null); setDropBeforeTaskId(null); };
+			const addTask = stageId => { if (!newTitle.trim()) return; setStages(current => current.map(stage => stage.id === stageId ? { ...stage, tasks: [...stage.tasks, { id: stageId + '-' + Date.now(), title: newTitle.trim() }] } : stage)); setNewTitle(''); setAddingTo(null); const targetStage = stages.find(stage => stage.id === stageId); recordActivity('Nova atividade: ' + newTitle.trim(), '+', targetStage ? targetStage.name : 'Atividade criada'); };
+			const normalizeFolderUrl = url => /^https?:\/\//i.test(url.trim()) ? url.trim() : 'https://' + url.trim();
+			const saveFolder = () => { const name = folderDraft.name.trim(); const url = normalizeFolderUrl(folderDraft.url); if (!folderDraft.url.trim()) return; if (editingFolderId) { setFolders(current => current.map(folder => folder.id === editingFolderId ? { ...folder, name: name || url, url } : folder)); recordActivity('Pasta monitorada editada: ' + (name || url), '✎'); } else { setFolders(current => [...current, { id: 'folder-' + Date.now(), name: name || url, url }]); recordActivity('Pasta monitorada adicionada: ' + (name || url), '+'); } setFolderDraft({ name: '', url: '' }); setEditingFolderId(null); setIsAddingFolder(false); };
+			const startEditingFolder = folder => { setEditingFolderId(folder.id); setFolderDraft({ name: folder.name, url: folder.url }); setIsAddingFolder(false); };
+			const deleteFolder = folder => { setFolders(current => current.filter(item => item.id !== folder.id)); recordActivity('Pasta monitorada excluída: ' + folder.name, '×'); };
+			return <main className="shell">
+				<nav className="topbar"><div className="brand"><span className="brand-mark">↗</span><span>Geração de ADS</span></div><span className="eyebrow" style={{margin: 0}}>Visão geral · {currentDate} {supabaseClient && <span className="sync-status">· {syncStatus}</span>}</span></nav>
+				<section className="hero"><div><p className="eyebrow">Fluxo de entrega</p><h1>Da ideia ao conteúdo.</h1><p className="hero-copy">Um mapa vivo das entregas de produção, com o que já foi construído, os próximos movimentos e os pontos que precisam de atenção.</p></div><div className="hero-side"><div className="hero-side-head"><span>Progresso do fluxo</span><span>{doneTasks} de {totalTasks} itens</span></div><strong>{progress}%</strong><div className="progress-track" style={{marginTop: 14}}><div className="progress-fill" style={{width: progress + '%'}}></div></div><div className="progress-meta"><span>Início da operação</span><span>Próximo ciclo</span></div></div></section>
+				<section className="routine"><div className="section-heading"><div><h2>Rotina</h2><p>Calendário semanal de atribuições da operação.</p></div></div><div className="routine-calendar">{[{ day: 'Segunda', task: 'Daily / edição' }, { day: 'Terça', task: 'Mineração' }, { day: 'Quarta', task: 'Edição' }, { day: 'Quinta', task: 'Mineração / ajustes' }, { day: 'Sexta', task: 'Edição' }].map(item => <article className={'routine-day' + (item.day.toLowerCase() === currentWeekday ? ' is-today' : '')} key={item.day}><h3>{item.day}</h3><div className="routine-task">{item.task}</div></article>)}</div></section>
+				<section className="monitored-folders"><div className="section-heading"><div><h2>Pastas Monitoradas</h2><p>Links de acesso rápido para os espaços usados na operação.</p></div><button className="filter active" onClick={() => { setIsAddingFolder(true); setEditingFolderId(null); setFolderDraft({ name: '', url: '' }); }}>＋ Adicionar link</button></div><div className="folder-grid">{folders.length === 0 && <div className="folder-empty">Nenhum link monitorado ainda.</div>}{folders.map(folder => editingFolderId === folder.id ? <div className="folder-card" key={folder.id}><div className="folder-edit"><input className="task-input" placeholder="Nome do link" value={folderDraft.name} onChange={event => setFolderDraft({ ...folderDraft, name: event.target.value })} /><input className="task-input" placeholder="https://..." value={folderDraft.url} onChange={event => setFolderDraft({ ...folderDraft, url: event.target.value })} onKeyDown={event => event.key === 'Enter' && saveFolder()} autoFocus /><button className="task-action" onClick={saveFolder}>Salvar</button></div></div> : <a className="folder-card" href={folder.url} target="_blank" rel="noreferrer" key={folder.id}><span className="folder-icon">↗</span><span className="folder-info"><span className="folder-name">{folder.name}</span><span className="folder-url">{folder.url}</span></span><span className="folder-actions"><button className="task-action" aria-label={'Editar ' + folder.name} onClick={event => { event.preventDefault(); startEditingFolder(folder); }}>Editar</button><button className="task-action" aria-label={'Excluir ' + folder.name} onClick={event => { event.preventDefault(); deleteFolder(folder); }}>Excluir</button></span></a>)}</div>{isAddingFolder && <div className="folder-add-form"><input className="task-input" placeholder="Nome do link (opcional)" value={folderDraft.name} onChange={event => setFolderDraft({ ...folderDraft, name: event.target.value })} /><input className="task-input" placeholder="Cole o link aqui" value={folderDraft.url} onChange={event => setFolderDraft({ ...folderDraft, url: event.target.value })} onKeyDown={event => event.key === 'Enter' && saveFolder()} autoFocus /><button className="task-action" onClick={saveFolder}>Adicionar</button><button className="task-action" onClick={() => setIsAddingFolder(false)}>Cancelar</button></div>}</section>
+				<section className="kpis"><div className="kpi"><span className="kpi-label">Itens no fluxo</span><span className="kpi-value">{totalTasks}</span><span className="kpi-note">100%</span></div><div className="kpi"><span className="kpi-label">Em seguida</span><span className="kpi-value">{nextStage.tasks.length}</span><span className="kpi-note">{stagePercentage(nextStage)}%</span></div><div className="kpi"><span className="kpi-label">Ativo</span><span className="kpi-value">{activeStage.tasks.length}</span><span className="kpi-note">{stagePercentage(activeStage)}%</span></div><div className="kpi"><span className="kpi-label">Concluído</span><span className="kpi-value">{completedStageForSummary.tasks.length}</span><span className="kpi-note">{stagePercentage(completedStageForSummary)}%</span></div></section>
+				<section><div className="section-heading"><div><h2>Mapa de entregas</h2><p>Arraste, edite, mova e crie tarefas diretamente no quadro.</p></div><div className="filters">{['Todos', 'Em seguida', 'Ativo', 'Concluído'].map(item => <button key={item} className={'filter ' + (filter === item ? 'active' : '')} onClick={() => setFilter(item)}>{item}</button>)}</div></div><div className="stages">{visibleStages.map(stage => <article className={'stage ' + stage.id + (dropTargetId === stage.id ? ' drop-target' : '')} key={stage.id} onDragOver={event => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; setDropTargetId(stage.id); }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget)) setDropTargetId(null); }} onDrop={event => handleDrop(event, stage.id)}><div className="stage-bar" style={{background: stage.color}}></div><div className="stage-body"><div className="stage-title"><h3>{stage.name}</h3><span className="count">{stage.tasks.length} {stage.tasks.length === 1 ? 'item' : 'itens'}</span></div><p>{stage.description}</p>{stage.tasks.length === 0 && <div className="empty-stage">Nenhuma tarefa nesta coluna.</div>}{stage.tasks.map(task => <div className={'task ' + (task.title.includes('garimpo') ? 'highlight' : '') + (draggedTaskId === task.id ? ' dragging' : '')} key={task.id} draggable="true" onDragStart={event => handleDragStart(event, task.id)} onDragEnd={() => { setDraggedTaskId(null); setDropTargetId(null); setDropBeforeTaskId(null); }} onDragOver={event => { event.preventDefault(); event.stopPropagation(); setDropTargetId(stage.id); setDropBeforeTaskId(task.id); }} onDrop={event => handleDrop(event, stage.id, task.id)}><span className="task-dot"></span>{editingId === task.id ? <div className="task-card"><div className="task-edit"><input className="task-input" value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => event.key === 'Enter' && saveTask(task.id)} autoFocus /><button className="task-action" onClick={() => saveTask(task.id)}>Salvar</button></div><select className="task-select" value={stage.id} onChange={event => moveTask(task.id, event.target.value, draft)}>{stages.map(option => <option value={option.id} key={option.id}>{option.name}</option>)}</select></div> : <><span className="task-card">{task.title}</span><span className="task-actions"><button className="task-action" aria-label={'Editar ' + task.title} onClick={() => startEditing(task)}>Editar</button><button className="task-action" aria-label={'Excluir ' + task.title} onClick={() => deleteTask(task.id)}>Excluir</button></span></>}</div>)}{addingTo === stage.id ? <div className="add-form"><input className="add-input" placeholder="Nome da nova tarefa" value={newTitle} onChange={event => setNewTitle(event.target.value)} onKeyDown={event => event.key === 'Enter' && addTask(stage.id)} autoFocus /><button className="task-action" onClick={() => addTask(stage.id)}>Adicionar</button><button className="task-action" onClick={() => setAddingTo(null)}>Cancelar</button></div> : <button className="add-task" onClick={() => { setAddingTo(stage.id); setNewTitle(''); }}>＋ Adicionar tarefa</button>}</div></article>)}</div></section>
+				<section className="details"><div className="panel"><h3>Saúde do fluxo</h3>{stages.map(stage => <div className="metric-row" key={stage.id}><div className="metric-label"><span>{stage.name}</span><span>{stagePercentage(stage)}%</span></div><div className="progress-track"><div className="progress-fill" style={{width: stagePercentage(stage) + '%', background: 'linear-gradient(90deg, ' + stage.color + ', #bda9ff)'}}></div></div></div>)}</div><div className="panel"><h3>Últimas movimentações</h3>{activity.map(item => <div className="update" key={item.id}><span className="update-icon">{item.icon}</span><div><b>{item.title}</b><small>{item.detail}</small></div></div>)}</div></section>
+				<p className="footer">Painel de acompanhamento da produção · histórico desta sessão</p>
+			</main>;
+		}
+		ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+	</script>
+</body>
 </html>
