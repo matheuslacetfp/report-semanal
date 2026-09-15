@@ -52,4 +52,4 @@ export interface DashboardState {
   updatedAt: string;
 }
 
-export type SyncStatus = 'Local' | 'Carregando...' | 'Salvando...' | 'Sincronizado' | 'Offline' | 'Conflito' | 'Realtime indisponível' | 'Erro ao salvar';
+export type SyncStatus = 'Local' | 'Carregando...' | 'Salvando...' | 'Sincronizado' | 'Offline' | 'Conflito' | 'Erro ao salvar';
