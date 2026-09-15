@@ -4,5 +4,8 @@ __pycache__/
 *.log
 .venv/
 .env
+node_modules/
+dist/
+db pass
 .DS_Store
 Thumbs.db

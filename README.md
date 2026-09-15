@@ -1,5 +1,18 @@
 # Como usar o painel
 
+## Desenvolvimento
+
+O painel agora usa Vite, React e TypeScript.
+
+1. Instale Node.js 20 ou superior.
+2. Execute `npm install`.
+3. Copie `.env.example` para `.env` e preencha as credenciais públicas do Supabase.
+4. Execute `npm run dev`.
+
+Para validar a aplicação, use `npm run build` e `npm test`.
+
+As credenciais não ficam mais no HTML. O arquivo `.env` deve permanecer fora do versionamento.
+
 O painel organiza as atividades da operação de conteúdo em três etapas:
 
 - **A fazer:** tarefas pendentes.
@@ -50,3 +63,9 @@ O painel atualiza automaticamente:
 - a saúde do fluxo de trabalho.
 
 As alterações são salvas automaticamente. Não é necessário clicar em um botão de salvar.
+
+## Pastas Monitoradas
+
+Na seção **Pastas Monitoradas**, adicione links de acesso rápido informando a URL e, opcionalmente, um nome personalizado. Cada link pode ser aberto, editado, favoritado, categorizado, pesquisado, reordenado ou excluído diretamente no painel. Os links também são salvos automaticamente junto com o restante do estado do dashboard.
+
+O app mantém backups locais, enfileira alterações quando está offline e detecta conflitos de versão no Supabase. Exclusões de tarefas podem ser desfeitas imediatamente.
